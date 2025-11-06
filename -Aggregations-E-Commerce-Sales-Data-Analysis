@@ -1,0 +1,212 @@
+use ecommerceSalesDB
+switched to db ecommerceSalesDB
+
+1) Top 3 best-selling products by quantity sold.
+
+db.orders.aggregate([
+  { $group: { _id: "$productName", totalQuantity: { $sum: "$quantity" } } },
+  { $sort: { totalQuantity: -1 } },
+  { $limit: 3 }
+])
+{
+  _id: 'T-shirt',
+  totalQuantity: 14
+}
+{
+  _id: 'Shoes',
+  totalQuantity: 5
+}
+{
+  _id: 'iPhone 14',
+  totalQuantity: 5
+}
+
+2) Total revenue for each product category.
+
+db.orders.aggregate([
+  { $group: { _id: "$category", totalRevenue: { $sum: "$totalPrice" } } },
+  { $sort: { totalRevenue: -1 } }
+])
+{
+  _id: 'Electronics',
+  totalRevenue: 5450
+}
+{
+  _id: 'Clothing',
+  totalRevenue: 630
+}
+{
+  _id: 'Home Appliances',
+  totalRevenue: 490
+}
+
+3) Average total price of all orders.
+
+db.orders.aggregate([
+  { $group: { _id: null, avgOrderPrice: { $avg: "$totalPrice" } } }
+])
+{
+  _id: null,
+  avgOrderPrice: 438
+}
+
+4) Number of orders placed each month.
+
+db.orders.aggregate([
+  {
+    $group: {
+      _id: { $month: { $toDate: "$orderDate" } },
+      orderCount: { $sum: 1 }
+    }
+  },
+  { $sort: { "_id": 1 } }
+])
+{
+  _id: 1,
+  orderCount: 2
+}
+{
+  _id: 2,
+  orderCount: 2
+}
+{
+  _id: 3,
+  orderCount: 3
+}
+{
+  _id: 4,
+  orderCount: 4
+}
+{
+  _id: 11,
+  orderCount: 2
+}
+{
+  _id: 12,
+  orderCount: 2
+}
+
+5) Percentage of canceled orders.
+
+db.orders.aggregate([
+  {
+    $group: {
+      _id: null,
+      totalOrders: { $sum: 1 },
+      cancelledOrders: {
+        $sum: { $cond: [{ $eq: ["$status", "Cancelled"] }, 1, 0] }
+      }
+    }
+  },
+  {
+    $project: {
+      _id: 0,
+      cancelledPercentage: {
+        $multiply: [{ $divide: ["$cancelledOrders", "$totalOrders"] }, 100]
+      }
+    }
+  }
+])
+{
+  cancelledPercentage: 13.333333333333334
+}
+
+6) Top product category by revenue.
+
+db.orders.aggregate([
+  { $group: { _id: "$category", revenue: { $sum: "$totalPrice" } } },
+  { $sort: { revenue: -1 } },
+  { $limit: 1 }
+])
+{
+  _id: 'Electronics',
+  revenue: 5450
+}
+
+7) Most frequently ordered product.
+
+db.orders.aggregate([
+  { $group: { _id: "$productName", orderCount: { $sum: 1 } } },
+  { $sort: { orderCount: -1 } },
+  { $limit: 1 }
+])
+{
+  _id: 'iPhone 14',
+  orderCount: 4
+}
+
+8) Monthly revenue trend.
+
+db.orders.aggregate([
+  {
+    $group: {
+      _id: { $month: { $toDate: "$orderDate" } },
+      monthlyRevenue: { $sum: "$totalPrice" }
+    }
+  },
+  { $sort: { "_id": 1 } }
+])
+{
+  _id: 1,
+  monthlyRevenue: 270
+}
+{
+  _id: 2,
+  monthlyRevenue: 1210
+}
+{
+  _id: 3,
+  monthlyRevenue: 600
+}
+{
+  _id: 4,
+  monthlyRevenue: 1350
+}
+{
+  _id: 11,
+  monthlyRevenue: 2100
+}
+{
+  _id: 12,
+  monthlyRevenue: 1040
+}
+
+9) Count of orders by status.
+
+db.orders.aggregate([
+  { $group: { _id: "$status", count: { $sum: 1 } } },
+  { $sort: { count: -1 } }
+])
+{
+  _id: 'Delivered',
+  count: 10
+}
+{
+  _id: 'Cancelled',
+  count: 2
+}
+{
+  _id: 'Shipped',
+  count: 2
+}
+{
+  _id: 'Pending',
+  count: 1
+}
+
+10) Total number of orders and quantity sold.
+
+db.orders.aggregate([
+  {
+    $group: {
+      _id: null,
+      totalOrders: { $sum: 1 },
+      totalQuantitySold: { $sum: "$quantity" }
+    }
+  }
+])
+{
+  _id: null,
+  totalOrders: 15,
+  totalQuantitySold: 30
+}
